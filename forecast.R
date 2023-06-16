@@ -10,6 +10,7 @@ library(glmnet)
 library(rbcb)
 library(lubridate)
 library(forecast)
+library(stargazer)
 
 
 
@@ -25,44 +26,6 @@ data <- acumulacao %>%
 
 
 
-# tirando as (12-1) primeiras linhas ja que acumulei inflacao em "12" meses (e tiro a ultima linha pois eh NA pra td mundo)
-#data <- data %>%
- # map(~ .x[-c(1:11, nrow(.x)),]) %>%
-  #map(~ remove_rownames(.x))
-
-# como vou querer prever inflacao acumulada "i" periodos a frente,
-# devo fazer a o decimo segundo elemento da coluna ipca virar o
-# primeiro, e assim sucessivamente para estimar o modelo "i" periodos
-# a frente
-
-# Codigo abaixo errado (?)
-#data <- map2(data,acumulacao,
-#     ~.x %>%
-#       mutate(ipca = lead(ipca,.y)))
-
-#data <- data %>%
-#  map(~.x %>%
-#        mutate(ipca = lead(ipca,11)))
-
-# como as ultimas (i-1) observacoes da inflacao foram apagadas acima,irei deletar as
-# todas as ultimas (i-1) linhas
-
-#data <- data %>%
-#  map(~.x %>%
-#        head(-11))
-
-# Vemos que o dataframe com menos linhas (dates) é o terceiro.
-# Para fazer todos os dataframes terem as mesmas dates:
-#max_date <- data[[3]]$ref.date %>% max()
-#data <- data %>% 
-#  map(~.x %>%
-#        filter(ref.date <= max_date))
-
-
-
-
-
-
 ########################################
 # 2) Organizando matrizes pros modelos
 ########################################
@@ -72,14 +35,8 @@ k <- 12
 
 # window (fixed) size: vou usar data[[1]], mas poderia ser qualquer outro 
 window <- data[[1]] %>% filter(ref.date <"2014-01-01") %>% nrow() 
-#window <- window - k +1 
 
-# variavel dependente (igual para todos)
-#y <- data %>%
-#  map(~.x %>%
-#        select(ipca) %>%
-#        as.matrix)
-
+# variavel dependente 
 y <- data[[1]] %>% #(poderia usar qualquer um dos dfs de data)
   select(ipca) %>%
   as.matrix()
@@ -93,14 +50,9 @@ X <- data %>%
 
 # numero de previsoes (igual pra todos)
 size <- nrow(data[[1]]) - window - 1 
-#size <- data %>%
-#  map(~nrow(.x) - window - 1)
-
 
 # valores observados (out of sample)
 y_obs <- y[(window+1):nrow(data[[1]])]
-#y_obs <- map2(y,data,
-#              ~.x[(window+1):nrow(.y)])
 
 
 #######################
@@ -171,16 +123,6 @@ combined_df <- bind_rows(lasso_freq, .id = "id") %>%
 
 # Keep only unique combinations of id and freq
 combined_df <- unique(combined_df[, c("id", "freq", "total_freq")])
-
-
-#lasso_freq = lasso_select %>% 
-#  map(~.x %>% unlist()%>%table%>%as.data.frame%>%rename("id"="."))
-
-# combine all dataframes into one using dplyr's bind_rows()
-#combined_df <- bind_rows(lasso_freq, .id = "id") %>%
-#  group_by(id) %>%  # group by common column name
-#  summarize(total_freq = sum(Freq))  # summarize the frequency
-
 
 
 ###############
@@ -319,34 +261,7 @@ error_measure <- cbind(rmse,mae,mad)
 # 5.4) Normalizing RMSE #
 #########################
 
-# 5.4.1) Benchmark predictions:
-
-# agora vou puxar varios meses e depois vou filtrar pro intervalo de tempo das bases
-#focus <- get_twelve_months_inflation_expectations(indic = c("IPCA"),
-#                                                  start_date = "2017-02-01",
-#                                                  end_date = "2022-02-01") %>%
-#  filter(smoothed == "N",
-#         base == 0) %>%
-#  select(date,median) %>%
-#  group_by(year(date), month(date)) %>%
-#  filter(day(date) == max(day(date)))%>%
-#  ungroup() %>%
-#  select(date,median)%>%
-#  arrange(date)
-
-# forçando dias a serem registrados como "01"
-#day(focus$date) <- 01
-
-# Ajeitando datas
-#min_date <- data[[1]]$ref.date[window+1]
-#max_date <- data[[1]]$ref.date %>% max()
-
-#focus <- focus %>%
-#  mutate(date = date %m+% months(12-1)) %>%
-#  filter(date <= max_date,
-#         date >= min_date) #ultima
-
-# 5.4.2) Benchmark RMSE
+# 5.4.1) Benchmark RMSE
 #focus <- head(focus,-1)#apago a ultima linha pois queria end_date = "2022-01-01", mas tive que escrever end_date = "2022-02-01" por conta de um bug
 focus <- data[[1]]$focus
   
@@ -354,7 +269,7 @@ focus <- focus[(window+1):nrow(data[[1]])]
   
 rmse_focus <- rmse(y_obs,focus)
 
-# 5.4.3) Normalizing rmse with rmse_focus
+# 5.4.2) Normalizing rmse with rmse_focus
 rmse_normal <- rmse/rmse_focus 
 
 rmse_normal <- round(rmse_normal,3)
@@ -372,8 +287,8 @@ save.image("workspace_2014_corrected.RData")
 ##################
 
 # 6.1) Tabela RMSE normalizado pelo focus: excluindo RW
-stargazer::stargazer(rmse_normal[,-5],summary = F)
+stargazer(rmse_normal[,-5],summary = F)
 
 # 6.2) Tabela RMSE nao normalizado: excluindo RW
-stargazer::stargazer(rmse[,-5]%>%round(3), summary = F)
+stargazer(rmse[,-5]%>%round(3), summary = F)
 
