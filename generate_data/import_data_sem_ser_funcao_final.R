@@ -489,8 +489,8 @@ rm(i)
   ###################
 
   focus <- get_twelve_months_inflation_expectations(indic = c("IPCA"),
-                                                    start_date = "2005-01-01",
-                                                    end_date = "2022-02-01") %>%
+                                                    start_date = "2005-02-01",
+                                                    end_date = "2022-03-01") %>%
     filter(smoothed == "N",
            base == 0) %>%
     select(date,median) %>%
@@ -523,7 +523,7 @@ rm(i)
   
   # por fim, para deixar as linhas baseadas nas datas das observacoes do ipca, como
   # trouxe o ipca 12 casas pra baixo, fareio mesmo com as datas;
-  df$ref.date <- df$ref.date %m+% years(1)
+  df$ref.date <- df$ref.date %m+% months(11)
   
   
   # como ultimas 12 linhas nao tem observacoes de ipca, posso deleta-las
