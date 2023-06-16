@@ -1,0 +1,15 @@
+Ideias:
+
+1-Dividir analise dos erros em: 
+(i) pre pandemia; (ii) pos pandemia (rmse)
+grafico sombreado no periodo de pandemia
+
+2 - descrever criterio de informacao (bic) usado
+
+3 - melhorar explicacao do RF
+
+4 - incluir ridge e as demais acumulacoes no texto
+
+5 - desintangle?
+
+6 - botar focus nos graficos 

@@ -1,0 +1,393 @@
+library(randomForest)
+library(tidyverse)
+library(HDeconometrics)
+library(Metrics)
+library(reshape2)
+library(ggplot2)
+library(ggsci)
+library(gridExtra)
+library(glmnet)
+library(rbcb)
+library(lubridate)
+library(forecast)
+
+
+
+#################
+# 1) Loading data 
+#################
+
+acumulacao <- 1:12 %>% as.list()
+
+data <- acumulacao %>%
+  map(~paste("~/MONOGRAFIA_TITO/data_new/df",.x,".rds",sep = "")%>%
+        readRDS())
+
+
+
+# tirando as (12-1) primeiras linhas ja que acumulei inflacao em "12" meses (e tiro a ultima linha pois eh NA pra td mundo)
+#data <- data %>%
+ # map(~ .x[-c(1:11, nrow(.x)),]) %>%
+  #map(~ remove_rownames(.x))
+
+# como vou querer prever inflacao acumulada "i" periodos a frente,
+# devo fazer a o decimo segundo elemento da coluna ipca virar o
+# primeiro, e assim sucessivamente para estimar o modelo "i" periodos
+# a frente
+
+# Codigo abaixo errado (?)
+#data <- map2(data,acumulacao,
+#     ~.x %>%
+#       mutate(ipca = lead(ipca,.y)))
+
+#data <- data %>%
+#  map(~.x %>%
+#        mutate(ipca = lead(ipca,11)))
+
+# como as ultimas (i-1) observacoes da inflacao foram apagadas acima,irei deletar as
+# todas as ultimas (i-1) linhas
+
+#data <- data %>%
+#  map(~.x %>%
+#        head(-11))
+
+# Vemos que o dataframe com menos linhas (dates) é o terceiro.
+# Para fazer todos os dataframes terem as mesmas dates:
+#max_date <- data[[3]]$ref.date %>% max()
+#data <- data %>% 
+#  map(~.x %>%
+#        filter(ref.date <= max_date))
+
+
+
+
+
+
+########################################
+# 2) Organizando matrizes pros modelos
+########################################
+
+# horizonte
+k <- 12
+
+# window (fixed) size: vou usar data[[1]], mas poderia ser qualquer outro 
+window <- data[[1]] %>% filter(ref.date <"2014-01-01") %>% nrow() 
+#window <- window - k +1 
+
+# variavel dependente (igual para todos)
+#y <- data %>%
+#  map(~.x %>%
+#        select(ipca) %>%
+#        as.matrix)
+
+y <- data[[1]] %>% #(poderia usar qualquer um dos dfs de data)
+  select(ipca) %>%
+  as.matrix()
+
+# matriz de regressores
+X <- data %>%
+  map(~.x %>%
+        select(-c(ref.date,ipca))%>% 
+        select_if(~ !any(is.na(.))) %>% # tirando colunas com NA
+        as.matrix())
+
+# numero de previsoes (igual pra todos)
+size <- nrow(data[[1]]) - window - 1 
+#size <- data %>%
+#  map(~nrow(.x) - window - 1)
+
+
+# valores observados (out of sample)
+y_obs <- y[(window+1):nrow(data[[1]])]
+#y_obs <- map2(y,data,
+#              ~.x[(window+1):nrow(.y)])
+
+
+#######################
+# 3.1) Random Forest ##
+#######################
+
+rf <- list()
+
+for (i in 1:length(data)) {
+  rf[[i]] <- 0:size %>%
+    map_dbl(
+      function(x){ randomForest(X[[i]][(1+ x):(window+x), ],
+                                y[(1+ x):(window+ x)]) %>%
+          predict(X[[i]][(window+x + 1), ])}
+    )
+}
+
+###############
+# 3.2) LASSO ##
+###############
+
+#3.2.1) LASSO forecasts
+
+lasso <- list()
+
+for (i in 1:length(data)) {
+  
+  lasso[[i]] <- 0:size %>%
+    map_dbl(
+      function(x){ cv.glmnet(X[[i]][(1+ x):(window+ x), ], 
+                             y[(1+ x):(window+ x)], alpha = 1, crit = "bic") %>%
+          predict(X[[i]][(window+x + 1), ])}
+    )
+  
+}
+
+
+# 3.2.2) LASSO variable selection
+
+lasso_select <- list()
+
+for (i in 1:length(data)) {
+  
+  lasso_select[[i]] <- 0:size %>%
+    map(
+      function(x){ 
+        ic_fit <- ic.glmnet(X[[i]][(1+ x):(window+ x), ], 
+                            y[(1+ x):(window+ x)], alpha = 1, crit = "bic")
+        unlist(coef(ic_fit, s = "lambda.min"))[-1] %>%
+          names() %>% # Extract variable names
+          as.character() # Convert to character vector
+      }
+    )
+  
+}
+
+
+
+# Combine all frequency tables into one using dplyr's bind_rows()
+lasso_freq <- lasso_select %>% 
+  map(~.x %>% unlist() %>% table() %>% as.data.frame() %>% 
+        rename("freq" = "."))
+
+
+combined_df <- bind_rows(lasso_freq, .id = "id") %>%
+  group_by(id, freq) %>%  # group by common columns
+  summarize(total_freq = sum(Freq))  # summarize the frequency
+
+# Keep only unique combinations of id and freq
+combined_df <- unique(combined_df[, c("id", "freq", "total_freq")])
+
+
+#lasso_freq = lasso_select %>% 
+#  map(~.x %>% unlist()%>%table%>%as.data.frame%>%rename("id"="."))
+
+# combine all dataframes into one using dplyr's bind_rows()
+#combined_df <- bind_rows(lasso_freq, .id = "id") %>%
+#  group_by(id) %>%  # group by common column name
+#  summarize(total_freq = sum(Freq))  # summarize the frequency
+
+
+
+###############
+# 3.3) RIDGE ##
+###############
+
+ridge <- list()
+
+for (i in 1:length(data)) {
+  
+  ridge[[i]] <- 0:size %>%
+    map_dbl(
+      function(x){ cv.glmnet(X[[i]][(1+ x):(window+ x), ], 
+                             y[(1+ x):(window+ x)], alpha = 0, crit = "bic") %>%
+          predict(X[[i]][(window+x + 1), ])}
+    )
+  
+}
+
+
+
+#############
+# 3.4) CSR ##
+#############
+
+csr <- list()
+
+for (i in 1:length(data)) {
+  csr[[i]] <- 0:size %>%
+    map_dbl(
+      function(x){ csr(X[[i]][(1+ x):(window+ x), ],
+                       y[(1+ x):(window+ x)]) %>%
+          predict(X[[i]][(window+x+1), ])}
+    )
+}
+
+
+
+#####################
+# 3.5) Random Walk ##
+#####################
+rw <- list()
+
+for (i in 1:(size+1)) {
+  # fit a random walk model to the current window
+  rw_model <- rwf(y[(i):(i+window-1)])
+  
+  # make a one-step-ahead forecast using the fitted model
+  next_val <- forecast(rw_model,h=1)$mean
+  
+  # store the forecast in the list
+  rw[[i]] <- next_val
+}
+
+
+rw <- rw %>%
+  map(. %>% unique(.))%>%
+  unlist()
+
+rw <- rep(list(rw), 12)
+
+
+################################
+# 4) Data Frame das previsoes ##
+################################
+
+prediction <- pmap(
+  list(rf,lasso,csr), function(first,second,third){
+    cbind(first, second, third)
+  }
+) %>%
+  map(~.x %>%
+        as.data.frame %>%
+        rename("RF" = first,
+               "LASSO" = second,
+               "CSR" = third
+        ))
+
+
+prediction <- map2(prediction,ridge,cbind) %>%
+  map(~.x %>%
+        rename("RIDGE" = ".y[[i]]"))
+
+prediction <- map2(prediction,rw,cbind) %>%
+  map(~.x %>%
+        rename("RW" = ".y[[i]]"))
+
+
+
+
+
+
+#############################
+# 5) medidas de performance #
+#############################
+
+# i) root mean squared error (RMSE)
+# ii) the mean absolute error (MAE) 
+# iii) median absolute deviation from the median (MAD)
+
+# PODEMOS QUERER CALCULAR essas medidas pra amostra toda 
+# ou pra varias subamostras
+
+
+
+###########################
+# 5.1) Erros de previsão ##
+###########################
+
+error <- prediction %>%
+  map(~y_obs - .x)
+
+
+###########################
+# 5.2) Medidas dos erros ##
+###########################
+
+# usarei "." ao inves de ".x", mas tanto faz
+
+rmse <- prediction %>%
+  map(. %>%
+        summarise_all(~rmse(y_obs, .))
+      )
+
+mae <- prediction %>%
+  map(. %>%
+        summarise_all(~mae(y_obs, .)) %>%
+        round(3))
+
+mad <- error %>%
+  map(. %>%
+        summarise_all(~mad(.)))
+
+#####################################
+# 5.3) Data Frame of Error Measures #
+#####################################
+
+rmse <- map(rmse,as.data.frame) %>%
+  bind_rows()
+
+mae <- map(mae,as.data.frame) %>%
+  bind_rows()
+
+mad <- map(mad,as.data.frame) %>%
+  bind_rows()
+
+error_measure <- cbind(rmse,mae,mad)
+
+#########################
+# 5.4) Normalizing RMSE #
+#########################
+
+# 5.4.1) Benchmark predictions:
+
+# agora vou puxar varios meses e depois vou filtrar pro intervalo de tempo das bases
+#focus <- get_twelve_months_inflation_expectations(indic = c("IPCA"),
+#                                                  start_date = "2017-02-01",
+#                                                  end_date = "2022-02-01") %>%
+#  filter(smoothed == "N",
+#         base == 0) %>%
+#  select(date,median) %>%
+#  group_by(year(date), month(date)) %>%
+#  filter(day(date) == max(day(date)))%>%
+#  ungroup() %>%
+#  select(date,median)%>%
+#  arrange(date)
+
+# forçando dias a serem registrados como "01"
+#day(focus$date) <- 01
+
+# Ajeitando datas
+#min_date <- data[[1]]$ref.date[window+1]
+#max_date <- data[[1]]$ref.date %>% max()
+
+#focus <- focus %>%
+#  mutate(date = date %m+% months(12-1)) %>%
+#  filter(date <= max_date,
+#         date >= min_date) #ultima
+
+# 5.4.2) Benchmark RMSE
+#focus <- head(focus,-1)#apago a ultima linha pois queria end_date = "2022-01-01", mas tive que escrever end_date = "2022-02-01" por conta de um bug
+focus <- data[[1]]$focus
+  
+focus <- focus[(window+1):nrow(data[[1]])]
+  
+rmse_focus <- rmse(y_obs,focus)
+
+# 5.4.3) Normalizing rmse with rmse_focus
+rmse_normal <- rmse/rmse_focus 
+
+rmse_normal <- round(rmse_normal,3)
+
+
+
+# Save workspace
+setwd("~/MONOGRAFIA_TITO/data_new")
+save.image("workspace_2014_corrected.RData")
+
+
+
+##################
+# 6) Output LATEX
+##################
+
+# 6.1) Tabela RMSE normalizado pelo focus: excluindo RW
+stargazer::stargazer(rmse_normal[,-5],summary = F)
+
+# 6.2) Tabela RMSE nao normalizado: excluindo RW
+stargazer::stargazer(rmse[,-5]%>%round(3), summary = F)
+
