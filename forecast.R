@@ -222,25 +222,11 @@ for (i in 1:length(data)) {
 #####################
 # 3.5) Random Walk ##
 #####################
-rw <- list()
 
-for (i in 1:(size+1)) {
-  # fit a random walk model to the current window
-  rw_model <- rwf(y[(i):(i+window-1)])
-  
-  # make a one-step-ahead forecast using the fitted model
-  next_val <- forecast(rw_model,h=1)$mean
-  
-  # store the forecast in the list
-  rw[[i]] <- next_val
-}
-
-
-rw <- rw %>%
-  map(. %>% unique(.))%>%
-  unlist()
+rw <- lag(y,1)[(window+1):nrow(data[[1]])]
 
 rw <- rep(list(rw), 12)
+
 
 
 ################################
