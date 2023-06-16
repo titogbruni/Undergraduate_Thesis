@@ -82,7 +82,7 @@ for (i in 1:length(data)) {
   
   lasso[[i]] <- 0:size %>%
     map_dbl(
-      function(x){ cv.glmnet(X[[i]][(1+ x):(window+ x), ], 
+      function(x){ ic.glmnet(X[[i]][(1+ x):(window+ x), ], 
                              y[(1+ x):(window+ x)], alpha = 1, crit = "bic") %>%
           predict(X[[i]][(window+x + 1), ])}
     )
@@ -135,7 +135,7 @@ for (i in 1:length(data)) {
   
   ridge[[i]] <- 0:size %>%
     map_dbl(
-      function(x){ cv.glmnet(X[[i]][(1+ x):(window+ x), ], 
+      function(x){ ic.glmnet(X[[i]][(1+ x):(window+ x), ], 
                              y[(1+ x):(window+ x)], alpha = 0, crit = "bic") %>%
           predict(X[[i]][(window+x + 1), ])}
     )
@@ -164,8 +164,9 @@ for (i in 1:length(data)) {
 #####################
 # 3.5) Random Walk ##
 #####################
+rw <- X[[1]] %>% as.data.frame() %>% select(ipca0)
 
-rw <- lag(y,1)[(window+1):nrow(data[[1]])]
+rw <- rw[(window+1):nrow(X[[1]]),1]
 
 rw <- rep(list(rw), 12)
 
