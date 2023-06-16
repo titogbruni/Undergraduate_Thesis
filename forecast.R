@@ -20,7 +20,7 @@ library(forecast)
 acumulacao <- 1:12 %>% as.list()
 
 data <- acumulacao %>%
-  map(~paste("~/MONOGRAFIA_TITO/data_new/df",.x,".rds",sep = "")%>%
+  map(~paste("~/GitHub2/MONOGRAFIA_TITO/data_new/df",.x,".rds",sep = "")%>%
         readRDS())
 
 
@@ -376,7 +376,7 @@ rmse_normal <- round(rmse_normal,3)
 
 
 # Save workspace
-setwd("~/MONOGRAFIA_TITO/data_new")
+setwd("~/GitHub2/MONOGRAFIA_TITO/data_new")
 save.image("workspace_2014_corrected.RData")
 
 

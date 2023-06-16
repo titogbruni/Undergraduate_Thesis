@@ -12,7 +12,7 @@ library(lubridate)
 library(zoo)
 
 # 2) Caminho para a pasta
-setwd("~/GitHub2/Undergraduate-Thesis")
+setwd("~/GitHub2/MONOGRAFIA_TITO")
 
 # 3) chamando o .xlsx que descreve as variaveis (lags e transformacoes)
 variable_description <- read_excel("variaveis_descricao.xlsx")
