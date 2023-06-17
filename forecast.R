@@ -171,6 +171,53 @@ rw <- rw[(window+1):nrow(X[[1]]),1]
 rw <- rep(list(rw), 12)
 
 
+#################
+# 3.6) Adalasso #
+#################
+
+lasso_weight <- list()
+step1.beta <- list()
+omega <- list()
+adalasso <- list()
+
+for (i in 1:length(data)) {
+  
+  # Parte 1: Calculando pesos via LASSO
+  
+  lasso_weight[[i]] <- 0:size %>%
+    map(
+      function(x){ ic.glmnet(X[[i]][(1+ x):(window+ x), ], 
+                             y[(1+ x):(window+ x)], alpha = 1, crit = "bic")
+          }
+    )
+  
+  step1.beta[[i]] <- 1:(size+1) %>%
+    map(
+      function(x){
+        coef(lasso_weight[[i]][[x]])[-1]
+      }
+  )
+  
+  tau <- 1
+
+  omega[[i]] <- 1:(size+1) %>%
+    map(
+      function(x){
+        (abs(step1.beta[[i]][[x]]) + 1/sqrt(window))^(-tau)
+      }
+    )
+
+  
+  # Parte 2: Calculado adalasso
+
+  adalasso[[i]] <- 0:size %>%
+    map_dbl(
+      function(x){ ic.glmnet(X[[i]][(1+ x):(window+ x), ], 
+                             y[(1+ x):(window+ x)], alpha = 1, penalty.factor = omega[[i]][[x+1]]) %>%
+          predict(X[[i]][(window+x + 1), ])}
+    )
+  }
+
 
 ################################
 # 4) Data Frame das previsoes ##
