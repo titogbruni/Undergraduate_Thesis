@@ -49,7 +49,7 @@ X <- data %>%
         as.matrix())
 
 # numero de previsoes (igual pra todos)
-size <- nrow(data[[1]]) - window - 1 
+size <- nrow(data[[1]]) - window - 1 #-1 porque nos loops faco 0:size, o que dá size+1 previsoes. 
 
 # valores observados (out of sample)
 y_obs <- y[(window+1):nrow(data[[1]])]
@@ -171,8 +171,27 @@ rw <- rw[(window+1):nrow(X[[1]]),1]
 rw <- rep(list(rw), 12)
 
 
+####################
+# 3.6) Elastic Net #
+####################
+
+# Codigo igual ao do lasso. Só trocar alpha=1 por alpha=0.5
+
+elnet <- list()
+
+for (i in 1:length(data)) {
+  
+  elnet[[i]] <- 0:size %>%
+    map_dbl(
+      function(x){ ic.glmnet(X[[i]][(1+ x):(window+ x), ], 
+                             y[(1+ x):(window+ x)], alpha = 0.5, crit = "bic") %>%
+          predict(X[[i]][(window+x + 1), ])}
+    )
+  
+}
+
 #################
-# 3.6) Adalasso #
+# 3.7) Adalasso #
 #################
 
 lasso_weight <- list()
