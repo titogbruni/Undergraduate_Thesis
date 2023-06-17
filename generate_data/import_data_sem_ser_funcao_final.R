@@ -338,7 +338,7 @@ rm(i)
 # 4) defina valor de "k": quantos periodos voce quer acumular as variaveis (ou tirar a
 #    diferenca X(t) - X(t-k))
 
-#k <- 3
+#k <- 1
   
   
   ##############################
@@ -449,40 +449,31 @@ rm(i)
   df <- df %>% 
     mutate_at(vars(all_of(cols_3)), ~ lag(c(rep(NA,c(k-1)),diff(., c(k-1))),1))
   
-  #######################
-  
-  #names_df <- names_df[-1]
-  #names_variables <- names_variables[-1]
-  
-  #for (i in 1:length(names_df)) {
-  
-  #  position <- which(names_variables == names_df[i])
-  
-  #  transf <- variable_description$transformation[position]
-  
-  #  name <- names_df[i]
-  
-  #  if(transf == 1){
-  #    df[,name] <- acumula_indice_mensal(df[,name],k)
-  #  }
-  
-  #  if(transf == 2){
-  #    df[,name] <- acumula_var_mensal(df[,name],k)
-  #  } 
-  
-  #  if(transf == 3){
-  #    df[,name] <- diff(df[,name],c(k-1))
-  #  }
-  
-  #}  
-  
-  #rm(i)
+  #######################################################
+  # Anualizando ipca e adicionando lags como regressores#
+  #######################################################
   
   df[,"ipca"] <- acumula_var_mensal(df[,"ipca"],12)
   
   df <- df %>% mutate(ipca0 = ipca,
                       ipca1 = lag(ipca,1),
-                      ipca2 = lag(ipca,2))
+                      ipca2 = lag(ipca,2),
+                      ipca3 = lag(ipca,3))
+  
+  
+  ######################################
+  # Ajeitando datas e a coluna do ipca #
+  ######################################
+  
+  # quero deixar coluna do ipca um ano a frente, logo:
+  
+  df <- df %>%
+    mutate(ipca = lead(ipca,11)) # usar comando de alguma funcao de dates
+  
+  # por fim, para deixar as linhas baseadas nas datas das observacoes do ipca, como
+  # trouxe o ipca 12 casas pra baixo, fareio mesmo com as datas;
+  df$ref.date <- df$ref.date %m+% months(11)
+  
   
   ####################
   # ADICIONANDO FOCUS
@@ -490,7 +481,7 @@ rm(i)
 
   focus <- get_twelve_months_inflation_expectations(indic = c("IPCA"),
                                                     start_date = "2005-02-01",
-                                                    end_date = "2022-03-01") %>%
+                                                    end_date = "2022-02-01") %>%
     filter(smoothed == "N",
            base == 0) %>%
     select(date,median) %>%
@@ -503,27 +494,22 @@ rm(i)
   # forçando dias a serem registrados como "01"
   day(focus$date) <- 01
   
-  focus <- head(focus,-1)#apago a ultima linha pois queria end_date = "2022-01-01", mas tive que escrever end_date = "2022-02-01" por conta de um bug
+  # Ex: 2005-02-01 tem previsao pra 2006-01-01. Logo, como vou mergear com o df
+  #     cujas datas foram movidas 11 periodos a frente, farei o mesmo aqui e depois
+  #     darei um merge pela coluna das dates pra evitar confusao (q poderia ocorrer se usasse um cbind)
   
+  focus <- focus %>% 
+    mutate(date = date %m+% months(11)) %>%
+    rename("ref.date" = "date",
+           "focus" = "median")
   
-  df <- df %>% mutate(focus = focus$median)
+  # merging
+  df <- merge(df, focus, by = "ref.date")
   
   
   #####################
   # Ajustes finais ###
   ####################
-  
-  # a data ta um periodo a frente
-  #df$ref.date <- df$ref.date %m+% months(1)
-  
-  # quero deixar coluna do ipca um ano a frente, logo:
-  
-  df <- df %>%
-    mutate(ipca = lead(ipca,11)) # usar comando de alguma funcao de dates
-  
-  # por fim, para deixar as linhas baseadas nas datas das observacoes do ipca, como
-  # trouxe o ipca 12 casas pra baixo, fareio mesmo com as datas;
-  df$ref.date <- df$ref.date %m+% months(11)
   
   
   # como ultimas 12 linhas nao tem observacoes de ipca, posso deleta-las
