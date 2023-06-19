@@ -299,9 +299,8 @@ df <- list(prices, commodities, real_sector, employment, electricity,
 # Later we will create a correspondence between the names 
 ################################################################
 
-#df <- head(df,-1)
-
-names_df <- colnames(df[,-1])
+# Excluo ref.date e ipca do loop
+names_df <- colnames(df[,-(1:2)])
 
 names_variables <- variable_description$variable
 
@@ -317,7 +316,7 @@ for (i in 1:length(names_df)) {
   
   name <- names_df[i]
   
-  df[,name] <- lead(df[,name],n = lag_value)
+  df[,name] <- lag(df[,name],n = lag_value)
 }
 
 rm(i)
@@ -447,7 +446,7 @@ rm(i)
   
   
   df <- df %>% 
-    mutate_at(vars(all_of(cols_3)), ~ lag(c(rep(NA,c(k-1)),diff(., c(k-1))),1))
+    mutate_at(vars(all_of(cols_3)), ~ c(rep(NA,k-1),diff(., k-1)))
   
   #######################################################
   # Anualizando ipca e adicionando lags como regressores#
@@ -455,10 +454,15 @@ rm(i)
   
   df[,"ipca"] <- acumula_var_mensal(df[,"ipca"],12)
   
-  df <- df %>% mutate(ipca0 = ipca,
-                      ipca1 = lag(ipca,1),
-                      ipca2 = lag(ipca,2),
-                      ipca3 = lag(ipca,3))
+  # Como o ipca só é divulgado em "t+1", entao farei o valor
+  # realizado x{t} aparecer apenas em x{t+1}. Dessa forma, o valor x{t}
+  # passa a ser o valor disponivel em "t" e nao o valor realizado.
+  # Chamarei o valor disponível em "t" de ipca0.
+  
+  df <- df %>% mutate(ipca0 = lag(ipca,1),
+                      ipca1 = lag(ipca,2),
+                      ipca2 = lag(ipca,3),
+                      ipca3 = lag(ipca,4))
   
   
   ######################################
@@ -475,9 +479,9 @@ rm(i)
   df$ref.date <- df$ref.date %m+% months(11)
   
   
-  ####################
-  # ADICIONANDO FOCUS
-  ###################
+  #####################
+  # ADICIONANDO FOCUS #
+  #####################
 
   focus <- get_twelve_months_inflation_expectations(indic = c("IPCA"),
                                                     start_date = "2005-02-01",
@@ -513,7 +517,7 @@ rm(i)
   
   
   # como ultimas 12 linhas nao tem observacoes de ipca, posso deleta-las
-  df <- head(df, -12)
+  #df <- head(df, -12)
   
   # como primeiras 11 linhas nao tem observacoes do ipca, deleto
   df <- df[-c(1:11),]
