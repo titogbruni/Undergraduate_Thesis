@@ -243,17 +243,24 @@ for (i in 1:length(data)) {
 ################################
 
 prediction <- pmap(
-  list(rf,lasso,csr), function(first,second,third){
+  list(rf,csr,lasso), function(first,second,third){
     cbind(first, second, third)
   }
 ) %>%
   map(~.x %>%
         as.data.frame %>%
         rename("RF" = first,
-               "LASSO" = second,
-               "CSR" = third
+               "CSR" = second,
+               "LASSO" = third
         ))
 
+prediction <- map2(prediction,adalasso,cbind) %>%
+  map(~.x %>%
+        rename("adalasso" = ".y[[i]]"))
+
+prediction <- map2(prediction,elnet,cbind) %>%
+  map(~.x %>%
+        rename("ElNet" = ".y[[i]]"))
 
 prediction <- map2(prediction,ridge,cbind) %>%
   map(~.x %>%
@@ -262,6 +269,8 @@ prediction <- map2(prediction,ridge,cbind) %>%
 prediction <- map2(prediction,rw,cbind) %>%
   map(~.x %>%
         rename("RW" = ".y[[i]]"))
+
+
 
 
 
@@ -322,7 +331,6 @@ mae <- map(mae,as.data.frame) %>%
 mad <- map(mad,as.data.frame) %>%
   bind_rows()
 
-error_measure <- cbind(rmse,mae,mad)
 
 #########################
 # 5.4) Normalizing RMSE #
@@ -339,23 +347,118 @@ rmse_focus <- rmse(y_obs,focus)
 # 5.4.2) Normalizing rmse with rmse_focus
 rmse_normal <- rmse/rmse_focus 
 
-rmse_normal <- round(rmse_normal,3)
+# guardando a estatisticas descritivas
+avg_rmse_normal <- rmse_normal %>% colMeans()
+max_rmse_normal <- apply(rmse_normal, 2, max)
+min_rmse_normal <- apply(rmse_normal, 2, min)
 
 
+# excluo RW
+rmse_normal <- rmse_normal %>%
+  select(-c("RW")) 
+
+# transposing
+rmse_normal <- t(rmse_normal) %>% as.data.frame()
+
+rownames(rmse_normal) <- NULL
+
+########################
+# 5.5) Normalizing MAE #
+########################
+
+mae_focus <- mae(y_obs,focus)
+
+mae_normal <- mae/mae_focus 
+
+# guardando estatisticas descritivas
+avg_mae_normal <- mae_normal %>% colMeans()
+max_mae_normal <- apply(mae_normal, 2, max)
+min_mae_normal <- apply(mae_normal, 2, min)
+
+
+mae_normal <- mae_normal %>%
+  select(-c("RW")) 
+
+# transposing
+mae_normal <- t(mae_normal) %>% as.data.frame()
+
+rownames(mae_normal) <- NULL
+
+
+########################
+# 5.6) Normalizing MAD #
+########################
+
+mad_focus <- mad(y_obs,focus)
+
+mad_normal <- mad/mad_focus 
+
+# estatisticas descritivas
+avg_mad_normal <- mad_normal %>% colMeans()
+max_mad_normal <- apply(mad_normal, 2, max)
+min_mad_normal <- apply(mad_normal, 2, min)
+
+
+mad_normal <- mad_normal %>%
+  select(-c("RW")) 
+
+# transposing
+mad_normal <- t(mad_normal) %>% as.data.frame()
+
+
+###########################################################
+# 5.7) Tabela das medias das medidas de erro normalizadas #
+###########################################################
+
+avg_error <- rbind(avg_rmse_normal,avg_mae_normal,
+                   avg_mad_normal) %>%t()
+
+max_error <- rbind(max_rmse_normal,max_mae_normal,
+                   max_mad_normal) %>% t()
+
+min_error <- rbind(min_rmse_normal,min_mae_normal,
+                   min_mad_normal) %>% t()
+
+stats_error <- cbind(avg_error,max_error,min_error)
+
+stargazer(stats_error,summary = F, digits = 2)
+
+
+
+
+
+
+
+
+
+
+
+
+###########################################
+# 5.6) Uniting rmse_normal and mae_normal #
+###########################################
+
+rmse_mae_normal <- gdata::interleave(rmse_normal, mae_normal)
+
+rownames(rmse_mae_normal) <- c("RF", "1",
+                               "CSR", "2 ",
+                               "LASSO", "3 ",
+                               "adalasso", "4 ",
+                               "ElNet","5 ",
+                               "RIDGE","6 ")
+
+rmse_mae_normal <- round(rmse_mae_normal,2)
 
 # Save workspace
-setwd("~/GitHub2/MONOGRAFIA_TITO/data_new")
-save.image("workspace_2014_corrected.RData")
+#setwd("~/GitHub2/MONOGRAFIA_TITO/data_new")
+#save.image("FINAL2workspace.RData")
+
+
+
 
 
 
 ##################
 # 6) Output LATEX
 ##################
-
-# 6.1) Tabela RMSE normalizado pelo focus: excluindo RW
-stargazer(rmse_normal[,-5],summary = F)
-
-# 6.2) Tabela RMSE nao normalizado: excluindo RW
-stargazer(rmse[,-5]%>%round(3), summary = F)
-
+stargazer(rmse_mae_normal,summary = F, digits = 2)
