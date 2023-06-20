@@ -519,8 +519,10 @@ rm(i)
   # como ultimas 12 linhas nao tem observacoes de ipca, posso deleta-las
   #df <- head(df, -12)
   
-  # como primeiras 11 linhas nao tem observacoes do ipca, deleto
-  df <- df[-c(1:11),]
+  # Apago as 12 primeiras linhas para que todos os dataframes (indpendente dos meses acumulados)
+  # tenham o mesmo tamanho.
+  
+  df <- df[-c(1:12),]
   
   # ajeitando rownames
   df <- remove_rownames(df)
