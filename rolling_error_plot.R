@@ -1,6 +1,7 @@
 error_window <- 12
 num_window <- size - error_window
 rolling_plots <- list()
+freq_list <- list() # lista que vera quantas vezes cada modelo bate o focus rolante
 
 ##############
 # o que esta em cima so eh pra rodar uma vez.
@@ -39,11 +40,14 @@ for (k in 1:12) {
   
   rolling_rmse <- cbind(date, rolling_rmse) %>%
     rename("RF" = "V1",
-           "LASSO" = "V2",
-           "CSR" = "V3",
-           "Ridge" = "V4",
-           "RW" = "V5")
+           "CSR" = "V2",
+           "LASSO" = "V3",
+           "adaLASSO" = "V4",
+           "ElNet" = "V5",
+           "Ridge" = "V6",
+           "RW" = "V7")
   
+  freq_list[[k]] <- rolling_rmse
   
   # plot_data
   rolling_rmse_plot <- melt(rolling_rmse ,
@@ -69,7 +73,7 @@ for (k in 1:12) {
     scale_x_date(date_breaks = "6 months",
                  date_labels = "%m/%Y") +
     geom_hline(yintercept = 1, linetype = "solid", color = "black")+ # add horizontal line
-    theme(legend.justification=c(1,1), legend.position=c(0.25,1),
+    theme(legend.justification=c(1,1), legend.position=c(0.27,1),
           legend.background = element_rect(fill = "white", color = "black"),
           legend.key.size = unit(0.25, "cm")) +
     theme(legend.title=element_blank())+
@@ -108,10 +112,21 @@ grid.arrange(rolling_plots[[1]],
              ncol = 2)
 
 
+##############################
+# frequency of "wins" table ##
+##############################
 
+freq_list <- freq_list %>% 
+  map(~.x %>%
+        select(-c("date")) %>%
+        summarise_all(~ sum(. < 1))) %>%
+  bind_rows() 
 
+freq_list <- (freq_list/length(date))*100
 
+freq_list <- freq_list %>% t() %>% as.data.frame()
 
+stargazer(freq_list, summary = F, digits = 2)
 
 
 
