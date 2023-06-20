@@ -1,0 +1,118 @@
+
+\begin{table}[!htbp] \centering 
+  \caption{Prices} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} ccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+variable & code & frequency & unity & transformation \\ 
+\hline \\[-1.8ex] 
+ipca & 433 & M & month\_\%\_var & 2 \\ 
+ipca\_ali & 1635 & M & month\_\%\_var & 2 \\ 
+ipca\_hab & 1636 & M & month\_\%\_var & 2 \\ 
+ipca\_resid & 1637 & M & month\_\%\_var & 2 \\ 
+ipca\_vest & 1638 & M & month\_\%\_var & 2 \\ 
+ipca\_transp & 1639 & M & month\_\%\_var & 2 \\ 
+ipca\_comunic & 1640 & M & month\_\%\_var & 2 \\ 
+ipca\_saude & 1641 & M & month\_\%\_var & 2 \\ 
+ipca\_desp & 1642 & M & month\_\%\_var & 2 \\ 
+ipca\_educ & 1643 & M & month\_\%\_var & 2 \\ 
+ipc\_BR & 191 & M & month\_\%\_var & 2 \\ 
+igp\_M & 189 & M & month\_\%\_var & 2 \\ 
+igp\_DI & 190 & M & month\_\%\_var & 2 \\ 
+igp10 & 7447 & M & month\_\%\_var & 2 \\ 
+ipca15 & 7478 & M & month\_\%\_var & 2 \\ 
+bm\_broad & 1788 & M & cmu\_thousand & 1 \\ 
+bm & 1785 & M & cmu\_thousand & 1 \\ 
+m1 & 1783 & M & cmu\_thousand & 1 \\ 
+m2 & 1786 & M & cmu\_thousand & 1 \\ 
+m3 & 27813 & M & cmu\_thousand & 0 \\ 
+m4 & 27815 & M & cmu\_thousand & 0 \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
+
+
+\begin{table}[!htbp] \centering 
+  \caption{Commodities} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} ccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+variable & code & frequency & unity & transformation \\ 
+\hline \\[-1.8ex] 
+icbr & 27574 & M & index & 1 \\ 
+icbr\_agr & 27575 & M & index & 1 \\ 
+icbr\_metal & 27576 & M & index & 1 \\ 
+icbr\_energy & 27577 & M & index & 1 \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
+
+
+
+\begin{table}[!htbp] \centering 
+  \caption{Employment} 
+  \label{} 
+  \centering
+\begin{tabular}{@{\extracolsep{5pt}} ccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+variable & code & frequency & unity & transformation \\ 
+\hline \\[-1.8ex] 
+unem1 & 10777 & M & \% & 0 \\ 
+unem2 & 24369 & M & \% & 0 \\ 
+min\_wage & 1619 & M & cmu & 0 \\ 
+aggreg\_wage & 10790 & M & R\$ & 0 \\ 
+\hline \\[-1.8ex] 
+\end{tabular}
+\end{table}
+
+
+\begin{table}[!htbp] \centering 
+  \caption{Activity} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} ccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+variable & code & frequency & unity & transformation \\ 
+\hline \\[-1.8ex] 
+ibcbr & 24363 & M & index & 2 \\ 
+pimpf & 21859 & M & index & 2 \\ 
+pimpf\_extract & 21861 & M & index & 2 \\ 
+pimpf\_manufac & 21862 & M & index & 2 \\ 
+retail\_total & 1455 & M & index & 2 \\ 
+retail\_fuel & 1483 & M & index & 2 \\ 
+retail\_supermarket & 1496 & M & index & 2 \\ 
+retail\_clothing & 1509 & M & index & 2 \\ 
+retail\_house & 1522 & M & index & 2 \\ 
+retail\_drugstore & 20099 & M & index & 2 \\ 
+retail\_paper & 20101 & M & index & 2 \\ 
+retail\_office & 20102 & M & index & 2 \\ 
+retail\_others & 20104 & M & index & 2 \\ 
+retail\_building & 20105 & M & index & 2 \\ 
+retail\_auto & 1548 & M & index & 2 \\ 
+prod\_vehicles & 1373 & M & units & 1 \\ 
+prod\_agr\_mach & 1388 & M & units & 1 \\ 
+vehicle\_sales & 7389 & M & barrels\_day\_thousand & 1 \\ 
+tcu & 24352 & M & \% & 0 \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
+
+
+\begin{table}[!htbp] \centering 
+  \caption{Electricity} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} ccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+variable & code & frequency & unity & transformation \\ 
+\hline \\[-1.8ex] 
+elec & 1406 & M & GWh & 1 \\ 
+elec\_com & 1402 & M & GWh & 1 \\ 
+elec\_res & 1403 & M & GWh & 1 \\ 
+elec\_ind & 1404 & M & GWh & 1 \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
