@@ -1,3 +1,4 @@
+<a href='https://github.com/titogbruni/Undergraduate_Thesis'><img src='https://github.com/titogbruni/Undergraduate_Thesis/blob/main/logo_README.png' align="right" height="139" /></a>
 
 #### **Undergraduate Thesis**
 
