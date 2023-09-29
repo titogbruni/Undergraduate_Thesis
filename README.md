@@ -1,12 +1,12 @@
 <a href='https://github.com/titogbruni/Undergraduate_Thesis'><img src='https://github.com/titogbruni/Undergraduate_Thesis/blob/main/logo_README.png' align="right" height="139" /></a>
 
-#### **Undergraduate Thesis**
+### **Undergraduate Thesis**
 
 Firstly, I import multiple variables from the Brazilian Central Bank [website](https://www3.bcb.gov.br/sgspub/localizarseries/localizarSeries.do?method=prepararTelaLocalizarSeries).
 
 Then, from this single dataframe, I create 12 new dataframes where variables are accumulated. For instance, *"df6"* has the variables accumulated in 6 months.
 
-Finally, for each dataframe I compute rolling and expanding window forecasts for the Brazilian yearly inflation. The models used were Random Forest, LASSO, Ridge, elastic net, adaLASSO and Random Walk. I compare these models with the Focus survey from the Brazilian Central Bank.
+Finally, for each dataframe I compute rolling and expanding window forecasts for the Brazilian yearly inflation. The models used are Random Forest, LASSO, Ridge, elastic net, adaLASSO and Random Walk. I compare these models with the Focus survey from the Brazilian Central Bank.
 
 The thesis can be found [here](https://github.com/titogbruni/Undergraduate_Thesis/blob/main/latex/output.pdf). 
 
@@ -17,7 +17,7 @@ The thesis can be found [here](https://github.com/titogbruni/Undergraduate_Thesi
 
 Folder with the R files that create the 12 dataframes. Run the file **accumulating_functions** before running **import_data**. 
 
-The file **import_data** calls the excel file **variaveis_descricao** that specifies which "accumulating formula" should be applied to each variable according to their "nature".For instance, the way of accumulating variables that are indexes is different from the way of accumulating variables that are percentage changes. 
+The file **import_data** calls the excel file **variaveis_descricao** that specifies which "accumulating formula" should be applied to each variable according to their "nature". For instance, the way of accumulating variables that are indexes is different from the way of accumulating variables that are percentage changes. 
 
 ------------------------------------------------------------------------
 
