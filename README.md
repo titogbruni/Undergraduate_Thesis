@@ -6,7 +6,7 @@ Firstly, I import multiple variables from the Brazilian Central Bank [website](h
 
 Then, from this single dataframe, I create 12 new dataframes where variables are accumulated. For instance, *"df6"* has the variables accumulated in 6 months.
 
-Finally, for each dataframe I compute rolling and expanding window forecasts for the Brazilian yearly inflation. The models used are Random Forest, LASSO, Ridge, elastic net, adaLASSO and Random Walk. I compare these models with the Focus survey from the Brazilian Central Bank.
+Finally, for each dataframe I compute rolling and expanding window forecasts for the Brazilian yearly inflation. The models used are Random Forest, Complete Subset Regression (CSR), LASSO, Ridge, elastic net, adaLASSO and Random Walk. I compare these models with the Focus survey from the Brazilian Central Bank.
 
 The thesis can be found [here](https://github.com/titogbruni/Undergraduate_Thesis/blob/main/latex/output.pdf). 
 
