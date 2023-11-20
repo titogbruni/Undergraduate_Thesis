@@ -3,21 +3,20 @@
 #####################
 
 # 1) Carregue bibliotecas
-
 library(GetBCBData)
-library(rbcb)
 library(tidyverse)
 library(readxl)
 library(lubridate)
 library(zoo)
 
 # 2) Caminho para a pasta
-setwd("~/GitHub2/MONOGRAFIA_TITO")
+setwd("/Users/titobruni/Documents/GitHub/Undergraduate_Thesis/generate_data")
+source("accumulating_functions.R")
+
+setwd("/Users/titobruni/Documents/GitHub/Undergraduate_Thesis")
 
 # 3) chamando o .xlsx que descreve as variaveis (lags e transformacoes)
 variable_description <- read_excel("variaveis_descricao.xlsx")
-
-
 
 
 ###################
@@ -454,10 +453,10 @@ rm(i)
   
   df[,"ipca"] <- acumula_var_mensal(df[,"ipca"],12)
   
-  # Como o ipca só é divulgado em "t+1", entao farei o valor
+  # Como o ipca s? ? divulgado em "t+1", entao farei o valor
   # realizado x{t} aparecer apenas em x{t+1}. Dessa forma, o valor x{t}
   # passa a ser o valor disponivel em "t" e nao o valor realizado.
-  # Chamarei o valor disponível em "t" de ipca0.
+  # Chamarei o valor dispon?vel em "t" de ipca0.
   
   df <- df %>% mutate(ipca0 = lag(ipca,1),
                       ipca1 = lag(ipca,2),
@@ -495,7 +494,7 @@ rm(i)
     select(date,median)%>%
     arrange(date)
   
-  # forçando dias a serem registrados como "01"
+  # for?ando dias a serem registrados como "01"
   day(focus$date) <- 01
   
   # Ex: 2005-02-01 tem previsao pra 2006-01-01. Logo, como vou mergear com o df
